@@ -13,7 +13,7 @@ public class BestScanner {
     private int iter = 0;
     private int reading = 0;
     final char[] sep = System.lineSeparator().toCharArray();
-    int strCount = 1;
+    private int strCount = 1;
     private boolean lastR = false;
 
     public BestScanner(String input, String encoding)
@@ -28,6 +28,10 @@ public class BestScanner {
 
     public BestScanner(InputStream input) {
         this.inputStream = new BufferedReader(new InputStreamReader(input));
+    }
+
+    public int getStrCount() {
+        return strCount;
     }
 
     //Закрываем файл

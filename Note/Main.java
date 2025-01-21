@@ -3,9 +3,18 @@ package Note;
 import java.io.*;
 
 public class Main {
+    public static void writeToConst(int number) {
+        try(Writer numWr = new OutputStreamWriter(
+                new FileOutputStream("src/Note/constants"), "utf-8")) {
+            numWr.write(number + "");
+        } catch (IOException e) {
+            System.out.println("IOException");
+        }
+    }
     public static void main(String[] args) {
         String newWord;
-        int number = 1;
+        int number;
+        int last = 1;
         boolean inNote = false;
         Note note = new Note();
         BestScanner input = new BestScanner(System.in);
@@ -31,6 +40,8 @@ public class Main {
         //
 
         try (Writer writer = new PrintWriter(new FileOutputStream("src/Note/new_file", true))) {
+            BestScanner numRead = new BestScanner("src/Note/constants", "utf-8");
+            number = numRead.getNextInt();
             while (!(newWord = input.getNext()).equals("quit")) {
                 if (!inNote) {
                     if (newWord.equals("clear")) {
@@ -40,6 +51,7 @@ public class Main {
                         delete.close();
                         update.setLength(0);
                         number = 1;
+                        writeToConst(number);
                     } else if (newWord.equals("start")) {
                         note.clear();
                         note.changeNumber(number);
@@ -47,11 +59,11 @@ public class Main {
                     } else if (newWord.equals("file")) {
                         BestScanner sc = new BestScanner("src/Note/new_file", "utf-8");
                         while (sc.hasNext()) {
-                            System.out.println(sc.getNextLine());
+                            System.out.println("||   " + sc.getNextLine());
                         }
                         BestScanner sc_update = new BestScanner(update.toString());
                         while (sc_update.hasNext()) {
-                            System.out.println(sc_update.getNextLine());
+                            System.out.println("||   " + sc_update.getNextLine());
                         }
                         sc_update.close();
                     }
@@ -62,11 +74,17 @@ public class Main {
                         inNote = false;
                         number += 1;
                     } else {
+                        int now = input.getStrCount();
+                        if (last < now) {
+                            note.addText("\n   ");
+                        }
                         note.addText(newWord);
                     }
                 }
+                last = input.getStrCount();
             }
             writer.write(update.toString());
+            writeToConst(number);
             System.out.println("Вы вышли из *лучшей* программы для заметок :(");
         } catch (IOException e) {
             System.out.println("IOException");
