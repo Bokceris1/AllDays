@@ -15,11 +15,12 @@ public class Note {
         this.number = number;
     }
 
-
     public Note() {
         this.text = "";
         this.number = 1;
     }
+
+    public int getNumber() {return number;}
 
     public String getText() {
         return text;
@@ -39,6 +40,6 @@ public class Note {
     }
 
     public String toString() {
-        return number + ". " + text + "\n";
+        return number + ". " + "{" + text + "}\n";
     }
 }
