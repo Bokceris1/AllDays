@@ -7,19 +7,145 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void writeToConst(int number) {
-        try(Writer numWr = new OutputStreamWriter(
-                new FileOutputStream("src/Note/constants"), "utf-8")) {
-            numWr.write(number + "");
+
+    private static void readFromFile (String prefix, String fileAddress) {
+        try (BestScanner scanner = new BestScanner(fileAddress, "utf-8")) {
+            while (scanner.hasNext()) {
+                System.out.println(prefix + scanner.getNextLine());
+            }
+        } catch (IOException ioe) {
+            System.out.println("IOException in reading " + ioe.getMessage());
+        }
+    }
+    /*
+    Метод readFromFile читает содержимое файла и выводит его на экран,
+    при этом к каждой строке прибавляется prefix
+     */
+
+    public static void init() {
+        readFromFile("", "src/Note/Menu");
+    }
+    /*
+    Метод init выводит на экран начальный интерфейс
+     */
+
+    public static void start(Note note, int number) {
+        note.clear();
+        note.changeNumber(number);
+    }
+    /*
+    Метод start готовит заметку к вводу
+     */
+
+    public static void file(String fileAddress, String update) {
+        readFromFile("||   ", fileAddress);
+        try (BestScanner sc_update = new BestScanner(update)) {
+            while (sc_update.hasNext()) {
+                System.out.println("||   " + sc_update.getNextLine());
+            }
+        } catch (IOException ioe) {
+            System.out.println("IOException in reading " + ioe.getMessage());
+        }
+    }
+    /*
+    Метод file производит вывод всех заметок из базы данных и обновления
+    */
+
+    public static void delete(BestScanner input, List<Note> notes, StringBuilder update) {
+        int delNum;
+        int l = 1;
+        if (input.hasNextInt()) {
+            delNum = input.getNextInt();
+
+            try {
+                BestScanner sc = new BestScanner("src/Note/new_file", "utf-8");
+                readNotes(sc, delNum, notes, update, WriteMode.SAVED, l);
+                sc.close();
+
+                Writer add = new OutputStreamWriter(
+                        new FileOutputStream("src/Note/new_file"), "utf-8");
+                l = 1;
+                for (Note n : notes) {
+                    n.changeNumber(l);
+                    l += 1;
+                    add.write(n.toString());
+                }
+                add.close();
+
+                String up = update.toString();
+                BestScanner sc2 = new BestScanner(up);
+                update.setLength(0);
+
+                readNotes(sc2, delNum, notes, update, WriteMode.UPDATE, l);
+                sc2.close();
+            } catch (IOException ioe) {
+                System.out.println("IOException in delete " + ioe.getMessage());
+            }
+        } else {
+            System.out.println("Вместо номера заметки вы ввели что-то странное");
+        }
+    }
+    /*
+    Метод delete удаляет из базы данных(notes) и обновления (update) заметку с заданным номером (delNum)
+    Номер задаётся сразу после команды
+    */
+
+    public static void end(StringBuilder update, Note note) {
+        update.append(note);
+        System.out.println("Ничего себе, заметка кончилась");
+    }
+    /*
+    Метод end записывает заметку(note) в обновление(update)
+    */
+
+    public static void readNotes (BestScanner scanner, int delNum, List<Note> notes,
+                                     StringBuilder update, WriteMode mode, int numNow) {
+        StringBuilder sb = new StringBuilder();
+        while (scanner.hasNext()) {
+            String line = scanner.getNextLine();
+            sb.append(line).append("\n");
+            if (line.charAt(line.length() - 1) == '}') {
+                Note lNote = new NoteParser().parse(sb.toString());
+                if (lNote.getNumber() != delNum) {
+                    if (mode == WriteMode.SAVED) {
+                        notes.add(lNote);
+                    } else {
+                        lNote.changeNumber(numNow);
+                        numNow += 1;
+                        update.append(lNote);
+                    }
+                }
+                sb.setLength(0);
+            }
+        }
+    }
+    /*
+    Метод readNotes производит парсинг всех заметок из базы данных
+     */
+
+    public static void writeToFile(String fileAddress, String text) {
+        try (Writer newWriter = new OutputStreamWriter(
+                new FileOutputStream(fileAddress), "utf-8")) {
+            newWriter.write(text);
         } catch (IOException e) {
             System.out.println("IOException");
         }
     }
+    /*
+    Метод writeToFile производит запись текста в файл по адресу
+    */
+
+    public static void clear(String fileAddress) {
+        writeToFile(fileAddress, "");
+    }
+    /*
+    Метод clear очищает файл
+     */
+
     public static void main(String[] args) {
         String newWord;
         int number;
         int last = 1;
-        int l = 1;
         boolean inNote = false;
         Note note = new Note();
         BestScanner input = new BestScanner(System.in);
@@ -27,23 +153,7 @@ public class Main {
         List<Note> notes = new ArrayList<>();
 
         //Interface
-        System.out.println("/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/" + "\n");
-        System.out.println("Здравствуйте! Вы находитесь в *лучшей* программе для заметок версии Nedo-Alpha 0.52.0!" + "\n");
-        System.out.println("____----                                                                           ||\\\\              ||");
-        System.out.println("Команды:                                                                           ||  \\\\            ||");
-        System.out.println("1. clear -> удалить содежимое файла.                                               ||    \\\\          ||");
-        System.out.println("2. start -> начать ввод заметки.                                                   ||      \\\\        ||");
-        System.out.println("3. end -> закончить ввод заметки.                                                  ||        \\\\      ||");
-        System.out.println("4. file -> вывести содержимое файла.                                               ||          \\\\    ||    _   ___  ___   _,                                    ");
-        System.out.println("5. quit -> *выйти из лучшей* программы для заметок?                                ||            \\\\  ||   | |   |   |--  |_                    ");
-        System.out.println("6. delete <номер заметки> -> удалить заметку.                                      ||              \\\\||   \\_/   |   |__  ._/       "
-                + "\n__-_-___\n");
-        System.out.println("@!______________________________!@");
-        System.out.println("Ваш отзыв очень важен для нас!");
-        System.out.println("Пожалуйста, оставьте его при себе!");
-        System.out.println("@!______________________________!@" + "\n");
-        System.out.println("/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/~/");
-        //
+        init();
         //Bag: } не должна приниматься в качестве символа
 
         try (Writer writer = new PrintWriter(new FileOutputStream("src/Note/new_file", true))) {
@@ -52,93 +162,23 @@ public class Main {
             while (!(newWord = input.getNext()).equals("quit")) {
                 if (!inNote) {
                     if (newWord.equals("clear")) {
-                        Writer delete = new OutputStreamWriter(
-                                new FileOutputStream("src/Note/new_file"), "utf-8");
-                        delete.write("");
-                        delete.close();
+                        clear("src/Note/new_file");
                         update.setLength(0);
                         number = 1;
-                        writeToConst(number);
+                        writeToFile("src/Note/constants", number + "");
                     } else if (newWord.equals("start")) {
-                        note.clear();
-                        note.changeNumber(number);
+                        start(note, number);
                         inNote = true;
                     } else if (newWord.equals("file")) {
-                        BestScanner sc = new BestScanner("src/Note/new_file", "utf-8");
-                        while (sc.hasNext()) {
-                            System.out.println("||   " + sc.getNextLine());
-                        }
-                        BestScanner sc_update = new BestScanner(update.toString());
-                        while (sc_update.hasNext()) {
-                            System.out.println("||   " + sc_update.getNextLine());
-                        }
-                        sc_update.close();
+                        file("src/Note/new_file", update.toString());
                     } else if (newWord.equals("delete")) {
-                        int delNum;
-                        if (input.hasNextInt()) {
-                            delNum = input.getNextInt();
-                            //System.out.println(delNum);
-                        } else {
-                            System.out.println("Вместо номера заметки вы ввели что-то странное");
-                            continue;
-                        }
-                        BestScanner sc = new BestScanner("src/Note/new_file", "utf-8");
-                        StringBuilder sb = new StringBuilder();
-                        while (sc.hasNext()) {
-                            String line = sc.getNextLine();
-                            sb.append(line).append("\n");
-                            //System.out.println(line);
-                            if (line.charAt(line.length() - 1) == '}') {
-                                Note lNote = new NoteParser().parse(sb.toString());
-                                //System.out.println(delNum + " " + lNote.getNumber());
-                                if (lNote.getNumber() != delNum) {
-                                    notes.add(lNote);
-                                }
-                                sb.setLength(0);
-                            }
-                        }
-                        sc.close();
-
-                        //System.out.println(notes);
-                        Writer add = new OutputStreamWriter(
-                                new FileOutputStream("src/Note/new_file"), "utf-8");
-                        l = 1;
-                        for (Note n : notes) {
-                            //System.out.println(n.toString());
-                            n.changeNumber(l);
-                            l += 1;
-
-                            add.write(n.toString());
-                        }
-                        add.close();
-
-                        String up = update.toString();
-                        BestScanner sc2 = new BestScanner(up);
-                        update.setLength(0);
-
-                        int p = l;
-                        while (sc2.hasNext()) {
-                            String line = sc2.getNextLine();
-                            sb.append(line).append("\n");
-                            if (line.charAt(line.length() - 1) == '}') {
-                                Note lNote = new NoteParser().parse(sb.toString());
-                                if (lNote.getNumber() != delNum) {
-                                    lNote.changeNumber(p);
-                                    p += 1;
-                                    update.append(lNote);
-                                }
-                                sb.setLength(0);
-                            }
-                        }
-                        sc2.close();
-
+                        delete(input, notes, update);
                         number -= 1;
-                        writeToConst(number);
+                        writeToFile("src/Note/constants", number + "");
                     }
                 } else {
                     if (newWord.equals("end")) {
-                        System.out.println("Ничего себе, заметка кончилась");
-                        update.append(note);
+                        end(update, note);
                         inNote = false;
                         number += 1;
                     } else {
@@ -152,7 +192,7 @@ public class Main {
                 last = input.getStrCount();
             }
             writer.write(update.toString());
-            writeToConst(number);
+            writeToFile("src/Note/constants", number + "");
             System.out.println("Вы вышли из *лучшей* программы для заметок :(");
         } catch (IOException e) {
             System.out.println("IOException");

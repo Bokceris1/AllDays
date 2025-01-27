@@ -2,7 +2,7 @@ package Note;
 
 import java.io.*;
 
-public class BestScanner {
+public class BestScanner implements AutoCloseable {
     public Reader inputStream;
     final int bufferSize = 2048;
     private char[] buffer = new char[bufferSize];
@@ -35,11 +35,11 @@ public class BestScanner {
     }
 
     //Закрываем файл
-    public void close() {
+    public void close() throws IOException {
         try {
             this.inputStream.close();
         } catch (IOException e) {
-            System.out.println("Can't close");
+            throw new IOException("Can't close");
         }
     }
 
