@@ -1,7 +1,7 @@
 Чтобы запустить программу необходимо ввести:
 
-cd <путь к папке>
+cd <путь к папке src>
 
-javac -cp <имя папки> <имя папки>/Note/*.java
+javac -cp src src/Note/*.java
 
-java -ea -cp <имя папки> <имя папки>/Note/Main.java
+java -ea -cp src src/Note/Main.java
